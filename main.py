@@ -7,8 +7,6 @@ import koboldfs.client
 import ConfigParser
 import argparse
 import sys
-import time
-import signal
 import threading
 
 import util
@@ -32,7 +30,7 @@ def get_backend(cfg):
     dbconf = cfg[cfg['defaults']['backend']]
     del dbconf['__name__']
     backend = getattr(backends, cfg['defaults']['backend']).database(**dbconf)
-    return backend.open()
+    return backend.open(cfg['defaults']['domain'])
 
 def linkserver(servers, domain):
     sv = {}
