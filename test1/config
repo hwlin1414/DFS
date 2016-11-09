@@ -1,0 +1,7 @@
+listen = 0.0.0.0:9999
+data = ./data
+dsn = mysql://dfs:dfspass@localhost/dfs
+name = test1
+tmp = ./tmp
+#log = log
+
