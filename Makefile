@@ -4,12 +4,12 @@ MYSQL_PASS=dfspass
 MYSQL_DB=dfs
 DOMAIN=demo
 
-all: db
+all: dbdomain
 
-kill:
-	@ps | grep main.py | grep python | awk '{print "kill -9", $$1}' | sh
-	
 db:
+	@$(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
+
+dbdomain:
 	@echo "adding domain $(DOMAIN)"
 	#@echo "INSERT INTO domains(name, folder, url) VALUE('$(DOMAIN)', '$(DOMAIN)', '')" | $(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
 	@echo "INSERT INTO servers_domains(server_id, domain_id) SELECT servers.id, domains.id from servers, domains WHERE domains.name = '$(DOMAIN)'" | $(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
