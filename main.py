@@ -48,6 +48,10 @@ def checkserver(args):
             cli = linkserver(s, args['defaults']['domain'])
             if cli.ping() == False:
                 print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
+                args['db'].server_failed(s['name'])
+                args['svlock'].acquire()
+                del args['sv'][s['name']]
+                args['svlock'].release()
         if args['exit'].wait(intval) == True:
             break
     if args['defaults']['debug']:

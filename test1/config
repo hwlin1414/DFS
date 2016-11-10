@@ -3,5 +3,6 @@ data = ./data
 dsn = mysql://dfs:dfspass@localhost/dfs
 name = test1
 tmp = ./tmp
+interval = 30
 #log = log
 

@@ -24,6 +24,17 @@ class database(object):
         self.root = self.getroot(domain)
         return self
 
+    def getroot(self, domain):
+        self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
+        res = self.c.fetchone()
+        if res is not None:
+            return res['id']
+
+        self.c.execute("insert into dirs(`name`, `dir_id`) value(%s, NULL)", (domain, ))
+        self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
+        res = self.c.fetchone()
+        return res['id']
+
     def server_list(self, domain):
         sv = {}
         self.c.execute("""
@@ -37,16 +48,24 @@ class database(object):
             sv[r['name']] = {'name': r['name'], 'host': r['host']}
         return sv
 
-    def getroot(self, domain):
-        self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
-        res = self.c.fetchone()
-        if res is not None:
-            return res['id']
-
-        self.c.execute("insert into dirs(`name`, `dir_id`) value(%s, NULL)", (domain, ))
-        self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
-        res = self.c.fetchone()
-        return res['id']
+    def server_failed(self, server):
+        self.c.execute("""
+            SELECT replicas.id, file_id FROM replicas
+            INNER JOIN servers ON replicas.server_id = servers.id
+            WHERE servers.name = %s
+        """, (server, ))
+        res = self.c.fetchall()
+        
+        for r in res:
+            print "found file: %d on %s" % (r['file_id'], server)
+            self.c.execute("""
+                DELETE FROM replicas
+                WHERE id = %s
+            """, (r['id'], ))
+            self.c.execute("""
+                UPDATE files SET replicas = replicas - 1
+                WHERE id = %s
+            """, (r['file_id'], ))
 
     def add_file(self, d, f):
         pass

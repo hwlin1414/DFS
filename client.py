@@ -10,7 +10,7 @@ s.setblocking(False)
 
 """ login """
 print 'send:'
-pkt = packet.Packet({'controller': 'echo', 'action': 'echo', 'psk': hashlib.md5('133221333123111').hexdigest()})
+pkt = packet.Packet({'controller': 'auth', 'action': 'login', 'psk': hashlib.md5('133221333123111').hexdigest()})
 print pkt.tostr()
 s.sendall(pkt.tostr())
 
