@@ -54,7 +54,7 @@ def newsock(args, sock, addr):
     i = args['conn']['count']
     args['conn']['count'] = i + 1
     args['conn']['total'][i] = sock
-    args['conn']['data'][i] = {'pkt': None, 'sock': sock, 'auth': False, 'index': i}
+    args['conn']['data'][i] = {'pkt': None, 'sock': sock, 'addr': addr, 'auth': False, 'index': i}
 
 def getId(conn, sock):
     for s in conn['total']:
