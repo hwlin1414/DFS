@@ -38,14 +38,14 @@ class database(object):
     def server_list(self, domain):
         sv = {}
         self.c.execute("""
-            SELECT servers.name, servers.host FROM servers
+            SELECT servers.id, servers.name, servers.host FROM servers
             INNER JOIN servers_domains ON servers.id = server_id
             INNER JOIN domains ON domain_id = domains.id
             WHERE domains.name = %s
             """, (domain,))
         res = self.c.fetchall()
         for r in res:
-            sv[r['name']] = {'name': r['name'], 'host': r['host']}
+            sv[r['name']] = {'id': r['id'], 'name': r['name'], 'host': r['host']}
         return sv
 
     def server_failed(self, server):
@@ -68,14 +68,81 @@ class database(object):
             """, (r['file_id'], ))
 
     def add_file(self, d, f):
-        pass
+        self.c.execute("""
+            INSERT INTO files_dirs(file_id, dir_id)
+            VALUE(%s, %s)
+        """, (f, d))
+
+    def get_file_sv(self, f):
+        sv = {}
+        self.c.execute("""
+            SELECT servers.id, servers.name, servers.host FROM servers
+            INNER JOIN replicas ON servers.id = server_id
+            WHERE replicas.file_id = %s
+            """, (f, ))
+        res = self.c.fetchall()
+        for r in res:
+            sv[r['name']] = {'id': r['id'], 'name': r['name'], 'host': r['host']}
+        return sv
+
     def rm_file(self, f):
-        pass
+        self.c.execute("""
+            DELETE FROM files_dirs
+            WHERE file_id = %s
+        """, (f, ))
+
     def add_dir(self, d, name):
-        pass
+        self.c.execute("""
+            INSERT INTO dirs(name, dir_id)
+            VALUE(%s, %s)
+        """, (name, d))
+
     def list_dir(self, d):
-        pass
+        ret = {}
+        self.c.execute("""
+            SELECT * FROM dirs
+            WHERE id = %s
+        """, (d, ))
+        s = self.c.fetchone()
+        if s is None: return ret
+        ret['.'] = {'id': s['id'], 'name': '.', 'ctime': s['created_at'], 'type': 'dir'}
+        
+        if s['dir_id'] is None:
+            ret['..'] = {'id': s['id'], 'name': '..', 'ctime': s['created_at'], 'type': 'dir'}
+        else:
+            self.c.execute("""
+                SELECT * FROM dirs
+                WHERE id = %s
+            """, (s['dir_id'], ))
+            sl = self.c.fetchone()
+            ret['..'] = {'id': sl['id'], 'name': '..', 'ctime': sl['created_at'], 'type': 'dir'}
+
+        self.c.execute("""
+            SELECT * FROM dirs
+            WHERE dir_id = %s
+        """, (s['id'], ))
+        res = self.c.fetchall()
+        for r in res:
+            ret[r['name']] = {'id': r['id'], 'name': r['name'], 'ctime': r['created_at'], 'type': 'dir'}
+
+        return ret
+
     def list_file(self, d):
-        pass
+        ret = {}
+        self.c.execute("""
+            SELECT files.id, files.key, files.bytes, files.checksum, files.created_on
+            FROM files
+            INNER JOIN files_dirs ON files.id = files_dirs.file_id
+            WHERE filed_dirs.dir_id = %s
+        """, (d, ))
+        res = self.c.fetchall()
+        for r in res:
+            ret[r['key']] = {'id': r['id'], 'name': r['key'], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'], 'type': 'file'}
+        return ret
+
     def rm_dir(self, d):
-        pass
+        self.c.execute("""
+            UPDATE dirs SET deleted_at = NOW()
+            WHERE id = %s
+        """, (d, ))
+
