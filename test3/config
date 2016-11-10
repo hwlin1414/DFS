@@ -1,4 +1,4 @@
-listen = 0.0.0.0:9997
+listen = 127.0.0.1:9997
 data = ./data
 dsn = mysql://dfs:dfspass@localhost/dfs
 name = test3

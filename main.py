@@ -32,32 +32,34 @@ def get_backend(cfg):
     backend = getattr(backends, cfg['defaults']['backend']).database(**dbconf)
     return backend.open(cfg['defaults']['domain'])
 
-def linkserver(servers, domain):
-    sv = {}
-    for s in servers:
-        cli = koboldfs.client.Client(domain, servers = [s['host']])
-        sv[s['name']] = {'name': s['name'], 'host': s['host'], 'cli': cli}
-    return sv
+def linkserver(server, domain):
+    cli = koboldfs.client.Client(domain, servers = [server['host']])
+    return cli
 
 def checkserver(args):
-    print "checkserver thread start"
-    servers = args['db'].server_list(args['defaults']['domain'])
-    sv = linkserver(servers, args['defaults']['domain'])
+    if args['defaults']['debug']:
+        print "checkserver thread start"
     intval = int(args['defaults']['interval'])
     while True:
-        for s in sv.values():
-            if s['cli'].ping() == False:
+        args['svlock'].acquire()
+        servers = args['sv']
+        args['svlock'].release()
+        for s in servers.values():
+            cli = linkserver(s, args['defaults']['domain'])
+            if cli.ping() == False:
                 print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
         if args['exit'].wait(intval) == True:
             break
-    print "checkserver thread exit"
+    if args['defaults']['debug']:
+        print "checkserver thread exit"
 
 def main(args):
     args['exit'] = threading.Event()
-    servers = args['db'].server_list(args['defaults']['domain'])
-    args['sv'] = linkserver(servers, args['defaults']['domain'])
+    args['sv'] = args['db'].server_list(args['defaults']['domain'])
+    args['svlock'] = threading.RLock()
     for s in args['sv'].values():
-        if s['cli'].ping() == False:
+        cli = linkserver(s, args['defaults']['domain'])
+        if cli.ping() == False:
             print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
             sys.exit(1)
         print "%s: %s [%s]" % (s['name'], s['host'], util.green("OK"))
@@ -69,10 +71,11 @@ def main(args):
         server.main(args)
     except KeyboardInterrupt:
         print ""
-        print "keyboard interrupted"
+        print "Caught KeyboardInterrupt, closing..."
         args['exit'].set()
         chksvth.join()
-    print "main exited"
+    if args['defaults']['debug']:
+        print "main exited"
 
 if __name__ == "__main__":
     cfg = {

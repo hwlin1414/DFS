@@ -21,22 +21,42 @@ class database(object):
         db.autocommit(True)
         self.c = db.cursor()
         self.c.execute('set names \'utf8\'')
-        self.check(domain)
+        self.root = self.getroot(domain)
         return self
 
     def server_list(self, domain):
+        sv = {}
         self.c.execute("""
-            select servers.name, servers.host from servers
-            inner join servers_domains on servers.id = server_id
-            inner join domains on domain_id = domains.id
-            where domains.name = %s
+            SELECT servers.name, servers.host FROM servers
+            INNER JOIN servers_domains ON servers.id = server_id
+            INNER JOIN domains ON domain_id = domains.id
+            WHERE domains.name = %s
             """, (domain,))
         res = self.c.fetchall()
-        return res
+        for r in res:
+            sv[r['name']] = {'name': r['name'], 'host': r['host']}
+        return sv
 
-    def check(self, domain):
+    def getroot(self, domain):
         self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
         res = self.c.fetchone()
-        if res is None:
-            print "creating top dir"
-            self.c.execute("insert into dirs(`name`, `dir_id`) value(%s, NULL)", (domain, ))
+        if res is not None:
+            return res['id']
+
+        self.c.execute("insert into dirs(`name`, `dir_id`) value(%s, NULL)", (domain, ))
+        self.c.execute("select * from dirs where name = %s and dir_id is NULL", (domain, ))
+        res = self.c.fetchone()
+        return res['id']
+
+    def add_file(self, d, f):
+        pass
+    def rm_file(self, f):
+        pass
+    def add_dir(self, d, name):
+        pass
+    def list_dir(self, d):
+        pass
+    def list_file(self, d):
+        pass
+    def rm_dir(self, d):
+        pass
