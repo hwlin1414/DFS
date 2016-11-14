@@ -146,3 +146,6 @@ class database(object):
             WHERE id = %s
         """, (d, ))
 
+    def dir_path(self, d):
+        pass
+        

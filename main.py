@@ -52,6 +52,7 @@ def checkserver(args):
                 args['svlock'].acquire()
                 del args['sv'][s['name']]
                 args['svlock'].release()
+            cli.close()
         if args['exit'].wait(intval) == True:
             break
     if args['defaults']['debug']:
@@ -60,6 +61,7 @@ def checkserver(args):
 def main(args):
     args['exit'] = threading.Event()
     args['sv'] = args['db'].server_list(args['defaults']['domain'])
+    args['svlink'] = linkserver
     args['svlock'] = threading.RLock()
     for s in args['sv'].values():
         cli = linkserver(s, args['defaults']['domain'])
@@ -67,6 +69,7 @@ def main(args):
             print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
             sys.exit(1)
         print "%s: %s [%s]" % (s['name'], s['host'], util.green("OK"))
+        cli.close()
     chksvth = threading.Thread(target = checkserver, name = 'chksvth', args = (args, ))
     chksvth.daemon = True
     chksvth.start()
