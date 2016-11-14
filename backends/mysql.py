@@ -85,6 +85,22 @@ class database(object):
             sv[r['name']] = {'id': r['id'], 'name': r['name'], 'host': r['host']}
         return sv
 
+    def get_file_name(self, fid):
+        self.c.execute("""
+            SELECT `key` FROM files
+            WHERE id = %s
+            """, (fid, ))
+        res = self.c.fetchone()
+        return res['key']
+
+    def get_file_id(self, fname):
+        self.c.execute("""
+            SELECT `id` FROM files
+            WHERE `key` = %s
+            """, (fname, ))
+        res = self.c.fetchone()
+        return res['id']
+
     def rm_file(self, f):
         self.c.execute("""
             DELETE FROM files_dirs
