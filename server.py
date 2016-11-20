@@ -16,8 +16,9 @@ def handle2(args, data):
         except AttributeError, e:
             bef = None
         act = getattr(con, data['pkt'].get('action'))
-    except AttributeError, e:
+    except (AttributeError, TypeError), e:
         print "Unknown Pack Recieved:"
+        print data['pkt'].tostr()
         return True
 
     if args['defaults']['debug']:
@@ -36,6 +37,7 @@ def handle(args, data):
     buf = data['sock'].recv(4096)
     if len(buf) == 0:
         return False
+    print buf
     data['pkt'] = packet.Packet.parse(data['pkt'], buf)
 
     ret = data['pkt'].check()

@@ -3,6 +3,7 @@
 
 import random
 import StringIO
+import packet
 
 def put(args, data):
     did = data['pkt'].get('id')

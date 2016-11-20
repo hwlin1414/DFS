@@ -3,6 +3,7 @@
 import MySQLdb
 import MySQLdb.cursors
 import json
+import datetime
 
 class database(object):
     def __init__(self, host='localhost', port='3306', user=None, passwd=None, db=None):
@@ -121,17 +122,17 @@ class database(object):
         """, (d, ))
         s = self.c.fetchone()
         if s is None: return ret
-        ret['.'] = {'id': s['id'], 'name': '.', 'ctime': s['created_at'], 'type': 'dir'}
+        ret['.'] = {'id': s['id'], 'name': '.', 'ctime': s['created_at'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'dir'}
         
         if s['dir_id'] is None:
-            ret['..'] = {'id': s['id'], 'name': '..', 'ctime': s['created_at'], 'type': 'dir'}
+            ret['..'] = {'id': s['id'], 'name': '..', 'ctime': s['created_at'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'dir'}
         else:
             self.c.execute("""
                 SELECT * FROM dirs
                 WHERE id = %s
             """, (s['dir_id'], ))
             sl = self.c.fetchone()
-            ret['..'] = {'id': sl['id'], 'name': '..', 'ctime': sl['created_at'], 'type': 'dir'}
+            ret['..'] = {'id': sl['id'], 'name': '..', 'ctime': sl['created_at'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'dir'}
 
         self.c.execute("""
             SELECT * FROM dirs
@@ -139,7 +140,7 @@ class database(object):
         """, (s['id'], ))
         res = self.c.fetchall()
         for r in res:
-            ret[r['name']] = {'id': r['id'], 'name': r['name'], 'ctime': r['created_at'], 'type': 'dir'}
+            ret[r['name']] = {'id': r['id'], 'name': r['name'], 'ctime': r['created_at'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'dir'}
 
         return ret
 
@@ -149,11 +150,11 @@ class database(object):
             SELECT files.id, files.key, files.bytes, files.checksum, files.created_on
             FROM files
             INNER JOIN files_dirs ON files.id = files_dirs.file_id
-            WHERE filed_dirs.dir_id = %s
+            WHERE files_dirs.dir_id = %s
         """, (d, ))
         res = self.c.fetchall()
         for r in res:
-            ret[r['key']] = {'id': r['id'], 'name': r['key'], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'], 'type': 'file'}
+            ret[r['key']] = {'id': r['id'], 'name': r['key'], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
         return ret
 
     def rm_dir(self, d):
