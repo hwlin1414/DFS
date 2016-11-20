@@ -24,7 +24,7 @@ def put(args, data):
     fid = args['db'].get_file_id(fname)
     args['db'].add_file(did, fid)
 
-    pkt = packet.Packet({'result': 'OK'})
+    pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())
 
 def get(args, data):
@@ -54,5 +54,5 @@ def rm(args, data):
     cli.delete(fname)
     cli.commit()
 
-    pkt = packet.Packet({'result': 'OK'}, output.read())
+    pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())

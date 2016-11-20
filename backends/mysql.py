@@ -137,6 +137,7 @@ class database(object):
         self.c.execute("""
             SELECT * FROM dirs
             WHERE dir_id = %s
+            AND deleted_at IS NULL
         """, (s['id'], ))
         res = self.c.fetchall()
         for r in res:
@@ -154,7 +155,7 @@ class database(object):
         """, (d, ))
         res = self.c.fetchall()
         for r in res:
-            ret[r['key']] = {'id': r['id'], 'name': r['key'], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
+            ret[r['key']] = {'id': r['id'], 'name': r['key'].split('-', 1)[1], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
         return ret
 
     def rm_dir(self, d):

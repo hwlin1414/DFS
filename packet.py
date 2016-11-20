@@ -6,7 +6,8 @@ import select
 
 class Packet:
     def __init__(self, header = {}, body = ""):
-        self.header = header
+        self.header = {}
+        self.header.update(header)
         self.body = body
     def set(self, header, value = None):
         if value is None:
@@ -40,7 +41,7 @@ class Packet:
     @staticmethod
     def parse(pkt, x):
         if pkt == None:
-            pkt = Packet()
+            pkt = Packet({}, "")
             buf = StringIO.StringIO(x)
             while True:
                 tmp = buf.readline().rstrip()
