@@ -31,7 +31,9 @@ def get(args, data):
     fid = data['pkt'].get('id')
     fname = args['db'].get_file_name(fid)
 
-    servers = args['db'].get_file_sv()
+    servers = args['db'].get_file_sv(fid)
+    server = random.sample(servers.values(), 1)[0]
+    client = args['svlink'](server, args['defaults']['domain'])
     output = StringIO.StringIO()
     if client.get(fname, output):
         output.seek(0)
@@ -53,6 +55,8 @@ def rm(args, data):
     cli = args['svlink'](server, args['defaults']['domain'])
     cli.delete(fname)
     cli.commit()
+
+    args['db'].rm_file(fid)
 
     pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())

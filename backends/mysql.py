@@ -70,7 +70,7 @@ class database(object):
 
     def add_file(self, d, f):
         self.c.execute("""
-            INSERT INTO files_dirs(file_id, dir_id)
+            INSERT IGNORE INTO files_dirs(file_id, dir_id)
             VALUE(%s, %s)
         """, (f, d))
 
@@ -155,7 +155,7 @@ class database(object):
         """, (d, ))
         res = self.c.fetchall()
         for r in res:
-            ret[r['key']] = {'id': r['id'], 'name': r['key'].split('-', 1)[1], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
+            ret[r['key'].split('-', 1)[1]] = {'id': r['id'], 'name': r['key'].split('-', 1)[1], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
         return ret
 
     def rm_dir(self, d):
