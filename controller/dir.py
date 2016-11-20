@@ -25,7 +25,7 @@ def add(args, data):
 
 def rm(args, data):
     did = data['pkt'].get('id')
-    args['db'].add_dir(did)
+    args['db'].rm_dir(did)
 
     pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())

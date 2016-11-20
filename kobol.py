@@ -6,8 +6,8 @@ import StringIO
 c = koboldfs.client.Client('demo', servers=['127.0.0.1:9999', '127.0.0.1:9998', '127.0.0.1:9997', '127.0.0.1:9996'])
 #c = koboldfs.client.Client('demo', servers=['127.0.0.1:9998'])
 
-c.put('test.conf', '/etc/rc.conf')
-c.commit()
+#c.put('1-test', '/etc/rc.conf')
+#c.commit()
 
 #buf = ""
 #o = StringIO.StringIO(buf)
@@ -18,5 +18,5 @@ c.commit()
 #    o.seek(0)
 #    print o.read()
 
-#c.delete('motd')
-#c.commit()
+c.delete('1-test')
+c.commit()
