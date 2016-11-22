@@ -43,6 +43,21 @@ def get(args, data):
         pkt = packet.Packet({'result': 'Error'}, output.read())
         data['sock'].sendall(pkt.tostr())
 
+def mvfile(args, data):
+    fid = data['pkt'].get('id')
+    pdid = data['pkt'].get('pdid')
+    name = data['pkt'].get('name')
+
+    if pdid is not None:
+        args['db'].move_file(fid, pdid)
+    else:
+        pdid = args['db'].get_file_dir(fid)
+    if name is not None:
+        name = "%s-%s" % (pdid, name)
+        args['db'].rename_file(fid, name)
+    pkt = packet.Packet({}, 'OK')
+    data['sock'].sendall(pkt.tostr())
+
 def rm(args, data):
     fid = data['pkt'].get('id')
     fname = args['db'].get_file_name(fid)

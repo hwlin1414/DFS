@@ -102,6 +102,24 @@ class database(object):
         res = self.c.fetchone()
         return res['id']
 
+    def get_file_dir(self, fid):
+        self.c.execute("""
+            SELECT `dir_id` FROM files_dirs
+            WHERE `file_id` = %s
+            """, (fid, ))
+        res = self.c.fetchone()
+        return res['dir_id']
+
+    def rename_file(self, fid, name):
+        self.c.execute("""
+            UPDATE `files` SET `key` = %s
+            WHERE `id` = %s
+        """, (name, fid))
+
+    def move_file(self, fid, did):
+        self.rm_file(fid)
+        self.add_file(did, fid)
+
     def rm_file(self, f):
         self.c.execute("""
             DELETE FROM files_dirs
@@ -157,6 +175,18 @@ class database(object):
         for r in res:
             ret[r['key'].split('-', 1)[1]] = {'id': r['id'], 'name': r['key'].split('-', 1)[1], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
         return ret
+
+    def rename_dir(self, did, name):
+        self.c.execute("""
+            UPDATE `dirs` SET `name` = %s
+            WHERE `id` = %s
+        """, (name, did))
+
+    def move_dir(self, did, pdid):
+        self.c.execute("""
+            UPDATE `dirs` SET `dir_id` = %s
+            WHERE `id` = %s
+        """, (pdid, did))
 
     def rm_dir(self, d):
         self.c.execute("""
