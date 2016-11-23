@@ -9,6 +9,7 @@ class Packet:
         self.header = {}
         self.header.update(header)
         self.body = body
+        self.set('content-length', len(body))
     def set(self, header, value = None):
         if value is None:
             self.body = header
