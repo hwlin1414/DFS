@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+import log
+import logging
+
 import koboldfs
 import koboldfs.client
 
@@ -15,17 +18,19 @@ import server
 
 #c = koboldfs.client.Client('demo', servers = ['localhost:999'])
 
+logger = logging.getLogger(__name__)
 cfgfile = ('dfs.conf', )
 
 def get_backend(cfg):
+    logger.debug("get_backend enter")
     if 'backend' not in cfg['defaults']:
-        print "no backend selected"
+        logger.critical("no backend selected")
         sys.exit(1)
     if cfg['defaults']['backend'] not in cfg:
-        print "backend not configured"
+        logger.critical("backend not configured")
         sys.exit(1)
     if not hasattr(backends, cfg['defaults']['backend']):
-        print "backend not found"
+        logger.critical("backend not found")
         sys.exit(1)
     dbconf = cfg[cfg['defaults']['backend']]
     del dbconf['__name__']
@@ -37,8 +42,7 @@ def linkserver(server, domain):
     return cli
 
 def checkserver(args):
-    if args['defaults']['debug']:
-        print "checkserver thread start"
+    logger.debug("checkserver thread start")
     intval = int(args['defaults']['interval'])
     while True:
         args['svlock'].acquire()
@@ -47,7 +51,7 @@ def checkserver(args):
         for s in servers.values():
             cli = linkserver(s, args['defaults']['domain'])
             if cli.ping() == False:
-                print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
+                logger.error("%s: %s [%s]", s['name'], s['host'], util.red("failed"))
                 args['db'].server_failed(s['name'])
                 args['svlock'].acquire()
                 del args['sv'][s['name']]
@@ -55,10 +59,10 @@ def checkserver(args):
             cli.close()
         if args['exit'].wait(intval) == True:
             break
-    if args['defaults']['debug']:
-        print "checkserver thread exit"
+    logger.debug("checkserver thread exit")
 
 def main(args):
+    logger.debug('main enter')
     args['exit'] = threading.Event()
     args['sv'] = args['db'].server_list(args['defaults']['domain'])
     args['svlink'] = linkserver
@@ -66,9 +70,9 @@ def main(args):
     for s in args['sv'].values():
         cli = linkserver(s, args['defaults']['domain'])
         if cli.ping() == False:
-            print "%s: %s [%s]" % (s['name'], s['host'], util.red("failed"))
+            logger.critical("%s: %s [%s]", s['name'], s['host'], util.red("failed"))
             sys.exit(1)
-        print "%s: %s [%s]" % (s['name'], s['host'], util.green("OK"))
+        logger.info("%s: %s [%s]", s['name'], s['host'], util.green("OK"))
         cli.close()
     chksvth = threading.Thread(target = checkserver, name = 'chksvth', args = (args, ))
     chksvth.daemon = True
@@ -77,14 +81,14 @@ def main(args):
     try:
         server.main(args)
     except KeyboardInterrupt:
-        print ""
-        print "Caught KeyboardInterrupt, closing..."
+        logger.info("Caught KeyboardInterrupt, closing...")
         args['exit'].set()
         chksvth.join()
-    if args['defaults']['debug']:
-        print "main exited"
+    logger.debug("main exited")
 
 if __name__ == "__main__":
+    logger.info('Program Start')
+
     cfg = {
         'listen': '0.0.0.0',
         'port': '4096',
@@ -102,11 +106,12 @@ if __name__ == "__main__":
     parser.add_argument('-d', dest = 'debug', action = "store_true", help = "Debug mode")
     parser.set_defaults(**cfg['defaults'])
     cfg['defaults'] = vars(parser.parse_args(sys.argv[1:]))
-    if cfg['defaults']['debug']: print cfg['defaults']
+    if cfg['defaults']['debug']: logger.setLevel(logging.DEBUG)
+    logger.debug("arguments: %s", str(cfg['defaults']))
 
     backend = get_backend(cfg)
-    if backend is None: 
-        print "backend error"
+    if backend is None:
+        logger.critical("backend error")
         sys.exit(1)
     cfg['db'] = backend
     try:

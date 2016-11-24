@@ -1,13 +1,19 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+import log
+import logging
+
 import socket
 import select
 
 import packet
 import controller
 
+logger = logging.getLogger(__name__)
+
 def handle2(args, data):
+    logger.debug("handle2 enter")
     bef = None
     try:
         con = getattr(controller, data['pkt'].get('controller'))
@@ -17,13 +23,9 @@ def handle2(args, data):
             bef = None
         act = getattr(con, data['pkt'].get('action'))
     except (AttributeError, TypeError), e:
-        print "Unknown Pack Recieved:"
-        print data['pkt'].tostr()
+        logger.debug("Unknown Packet Recieved:%s", data['pkt'].tostr())
         return True
-
-    if args['defaults']['debug']:
-        print "packet: %s -> %s" % (data['pkt'].get('controller'), data['pkt'].get('action'))
-        print data['pkt'].tostr()
+    logger.debug("packet: %s -> %s content:%s", data['pkt'].get('controller'), data['pkt'].get('action'), data['pkt'].tostr())
 
     if bef is not None:
         ret = bef(args, data)
@@ -32,8 +34,7 @@ def handle2(args, data):
     return act(args, data)
 
 def handle(args, data):
-    if args['defaults']['debug']:
-        print "recieved packet"
+    logger.debug("handle enter(recieved packet)")
     buf = data['sock'].recv(4096)
     if len(buf) == 0:
         return False
@@ -50,8 +51,10 @@ def handle(args, data):
     return True
 
 def newsock(args, sock, addr):
-    if args['defaults']['debug']:
-        print "newsocket:", addr
+    logger.debug("newsock enter")
+    logger.info("newsocket: %s", addr)
+    #if args['defaults']['debug']:
+    #    print "newsocket:", addr
     i = args['conn']['count']
     args['conn']['count'] = i + 1
     args['conn']['total'][i] = sock
@@ -64,9 +67,12 @@ def getId(conn, sock):
     return None
 
 def main(args):
+    logger.debug("main enter")
     svsock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     svsock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    svsock.bind((args['defaults']['listen'], args['defaults']['port']))
+    addr = (args['defaults']['listen'], args['defaults']['port'])
+    logger.info("bind: %s", addr)
+    svsock.bind(addr)
     svsock.listen(socket.SOMAXCONN)
 
     conn = {'count': 1, 'total': {0: svsock}, 'listen': svsock, 'data': {}}
@@ -81,7 +87,7 @@ def main(args):
             else:
                 i = getId(conn, sock)
                 if i == None:
-                    print "getId failed i: %d" % (i, )
+                    logger.error("getId failed i: %s", i)
                     continue
                 data = conn['data'][i]
                 try:

@@ -1,9 +1,15 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
+
+import log
+import logging
+
 import MySQLdb
 import MySQLdb.cursors
 import json
 import datetime
+
+logger = logging.getLogger(__name__)
 
 class database(object):
     def __init__(self, host='localhost', port='3306', user=None, passwd=None, db=None):
@@ -14,10 +20,11 @@ class database(object):
         self.db = db
 
     def open(self, domain):
+        logger.debug("db open")
         try :
             db = MySQLdb.connect(host=self.host, user=self.user, passwd=self.passwd, db=self.db, port=int(self.port), cursorclass=MySQLdb.cursors.DictCursor)
         except MySQLdb.Error, e:
-            print "DB connection Error %d: %s" % (e.args[0], e.args[1])
+            logger.error("DB connection Error %d: %s", e.args[0], e.args[1])
             return None
         db.autocommit(True)
         self.c = db.cursor()
@@ -69,6 +76,7 @@ class database(object):
             """, (r['file_id'], ))
 
     def add_file(self, d, f):
+        logger.debug("add file d:%s f:%s", d, f)
         self.c.execute("""
             INSERT IGNORE INTO files_dirs(file_id, dir_id)
             VALUE(%s, %s)
@@ -98,6 +106,8 @@ class database(object):
         self.c.execute("""
             SELECT `id` FROM files
             WHERE `key` = %s
+            ORDER BY id DESC
+            LIMIT 1
             """, (fname, ))
         res = self.c.fetchone()
         return res['id']
@@ -121,6 +131,7 @@ class database(object):
         self.add_file(did, fid)
 
     def rm_file(self, f):
+        logger.debug("rm f:%s", f)
         self.c.execute("""
             DELETE FROM files_dirs
             WHERE file_id = %s
@@ -170,6 +181,7 @@ class database(object):
             FROM files
             INNER JOIN files_dirs ON files.id = files_dirs.file_id
             WHERE files_dirs.dir_id = %s
+            AND files.status == 'R'
         """, (d, ))
         res = self.c.fetchall()
         for r in res:

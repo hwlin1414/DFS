@@ -1,19 +1,26 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+import log
+import logging
+
 import StringIO
 import select
 
+logger = logging.getLogger(__name__)
+
 class Packet:
-    def __init__(self, header = {}, body = ""):
+    def __init__(self, header = {}, body = "", nomodify = False):
         self.header = {}
         self.header.update(header)
         self.body = body
-        self.set('content-length', len(body))
-    def set(self, header, value = None):
+        if nomodify == False:
+            self.set('content-length', len(body))
+    def set(self, header, value = None, nomodify = False):
         if value is None:
             self.body = header
-            self.set('content-length', len(header))
+            if nomodify == False:
+                self.set('content-length', len(header))
         else:
             self.header[header] = value
     def get(self, header = None):
@@ -35,15 +42,17 @@ class Packet:
         if l == None:
             print "packet unknown"
             return None
-        if l == len(self.get()):
+        if int(l) <= len(self.get()):
+            #print "check true"
             return True
+        #print "check false"
         return False
 
     @staticmethod
     def parse(pkt, x):
+        buf = StringIO.StringIO(x)
         if pkt == None:
             pkt = Packet({}, "")
-            buf = StringIO.StringIO(x)
             while True:
                 tmp = buf.readline().rstrip()
                 if tmp == "":
@@ -51,5 +60,5 @@ class Packet:
                 tmp = tmp.split(":", 1)
                 if len(tmp) == 2:
                     pkt.set(tmp[0], tmp[1].strip())
-        pkt.set(pkt.get() + buf.read())
+        pkt.set(pkt.get() + buf.read(), nomodify = True)
         return pkt

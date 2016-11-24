@@ -1,0 +1,17 @@
+make: 將資料庫的所有server 加入domain (群組)
+
+make clean: 清除所有檔案
+
+make cleanall: 清除所有檔案、server紀錄
+
+
+
+make cleanall 之後要開server 要做的事情：
+    
+    先啟動一次所有slaves (這時看到Enabled domain沒東西) (會把server加入DB裡)
+
+    關掉slaves，在master 下make(把server 加入domain)
+
+    再開一次slaves
+
+    開master(python2 main.py)

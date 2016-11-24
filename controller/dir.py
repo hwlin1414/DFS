@@ -1,11 +1,17 @@
 #!/usr/bin/env python
 #-*- coding: utf-8 -*-
 
+import log
+import logging
+
 import json
 import packet
 
+logger = logging.getLogger(__name__)
+
 def list(args, data):
     did = data['pkt'].get('id')
+    #logger.debug("dir -> list %s", did)
     if did is None:
         did = args['db'].root
     x = args['db'].list_dir(did)
@@ -18,6 +24,7 @@ def list(args, data):
 def add(args, data):
     did = data['pkt'].get('id')
     dname = data['pkt'].get('name')
+    logger.info("add pdid:%s name:\"%s\"", did, dname)
     args['db'].add_dir(did, dname)
     
     pkt = packet.Packet({}, 'OK')
@@ -28,6 +35,8 @@ def mvdir(args, data):
     pdid = data['pkt'].get('pdid')
     name = data['pkt'].get('name')
 
+    logger.info("mvdir did:%s pdid:%s name:\"%s\"", did, pdid, name)
+
     if pdid is not None:
         args['db'].move_dir(did, pdid)
     if name is not None:
@@ -37,6 +46,8 @@ def mvdir(args, data):
 
 def rm(args, data):
     did = data['pkt'].get('id')
+    logger.info("rm did:%s", did)
+
     args['db'].rm_dir(did)
 
     pkt = packet.Packet({}, 'OK')
