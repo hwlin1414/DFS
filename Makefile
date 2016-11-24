@@ -12,7 +12,7 @@ db:
 domain:
 	@echo "adding domain $(DOMAIN)"
 	@echo "INSERT IGNORE INTO domains(name, folder, url) VALUE('$(DOMAIN)', '$(DOMAIN)', '')" | $(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
-	@echo "INSERT INTO servers_domains(server_id, domain_id) SELECT servers.id, domains.id from servers, domains WHERE domains.name = '$(DOMAIN)'" | $(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
+	@echo "INSERT IGNORE INTO servers_domains(server_id, domain_id) SELECT servers.id, domains.id from servers, domains WHERE domains.name = '$(DOMAIN)'" | $(MYSQL) -u $(MYSQL_USER) -p$(MYSQL_PASS) $(MYSQL_DB)
 
 clean:
 	@echo "cleaning database"
