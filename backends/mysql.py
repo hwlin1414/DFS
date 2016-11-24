@@ -29,6 +29,8 @@ class database(object):
         db.autocommit(True)
         self.c = db.cursor()
         self.c.execute('set names \'utf8\'')
+        self.c.execute('SET SESSION wait_timeout = 2880000')
+        self.c.execute('SET SESSION interactive_timeout = 2880000')
         self.root = self.getroot(domain)
         return self
 
