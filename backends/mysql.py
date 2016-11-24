@@ -75,12 +75,12 @@ class database(object):
                 WHERE id = %s
             """, (r['file_id'], ))
 
-    def add_file(self, d, f):
+    def add_file(self, d, f, name):
         logger.debug("add file d:%s f:%s", d, f)
         self.c.execute("""
-            INSERT IGNORE INTO files_dirs(file_id, dir_id)
-            VALUE(%s, %s)
-        """, (f, d))
+            INSERT IGNORE INTO files_dirs(file_id, dir_id, name)
+            VALUE(%s, %s, %s)
+        """, (f, d, name))
 
     def get_file_sv(self, f):
         sv = {}
@@ -94,7 +94,18 @@ class database(object):
             sv[r['name']] = {'id': r['id'], 'name': r['name'], 'host': r['host']}
         return sv
 
-    def get_file_name(self, fid):
+    def get_file_rname(self, did, name):
+        self.c.execute("""
+            SELECT `key` FROM files_dirs
+            INNER JOIN files ON files_dirs.file_id = files.id
+            WHERE dir_id = %s AND name = %s
+            """, (did, name))
+        res = self.c.fetchone()
+        if res is None:
+            return None
+        return res['key']
+
+    def get_file_rname_by_id(self, fid):
         self.c.execute("""
             SELECT `key` FROM files
             WHERE id = %s
@@ -102,13 +113,13 @@ class database(object):
         res = self.c.fetchone()
         return res['key']
 
-    def get_file_id(self, fname):
+    def get_file_id(self, rname):
         self.c.execute("""
             SELECT `id` FROM files
             WHERE `key` = %s
             ORDER BY id DESC
             LIMIT 1
-            """, (fname, ))
+            """, (rname, ))
         res = self.c.fetchone()
         return res['id']
 
@@ -122,13 +133,16 @@ class database(object):
 
     def rename_file(self, fid, name):
         self.c.execute("""
-            UPDATE `files` SET `key` = %s
-            WHERE `id` = %s
+            UPDATE `files_dirs` SET `name` = %s
+            WHERE `file_id` = %s
         """, (name, fid))
 
     def move_file(self, fid, did):
-        self.rm_file(fid)
-        self.add_file(did, fid)
+        self.c.execute("""
+            UPDATE `files_dirs`
+            SET `dir_id` = %s
+            WHERE `file_id` = %s
+        """, (did, fid))
 
     def rm_file(self, f):
         logger.debug("rm f:%s", f)
@@ -177,7 +191,7 @@ class database(object):
     def list_file(self, d):
         ret = {}
         self.c.execute("""
-            SELECT files.id, files.key, files.bytes, files.checksum, files.created_on
+            SELECT files.id, files_dirs.name, files.bytes, files.checksum, files.created_on
             FROM files
             INNER JOIN files_dirs ON files.id = files_dirs.file_id
             WHERE files_dirs.dir_id = %s
@@ -185,7 +199,7 @@ class database(object):
         """, (d, ))
         res = self.c.fetchall()
         for r in res:
-            ret[r['key'].split('-', 1)[1]] = {'id': r['id'], 'name': r['key'].split('-', 1)[1], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
+            ret[r['name']] = {'id': r['id'], 'name': r['name'], 'size': r['bytes'], 'cksum': r['checksum'], 'ctime': r['created_on'].strftime("%Y-%m-%d %H:%M:%S"), 'type': 'file'}
         return ret
 
     def rename_dir(self, did, name):

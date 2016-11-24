@@ -5,6 +5,7 @@ import log
 import logging
 
 import random
+import string
 import StringIO
 import packet
 
@@ -12,9 +13,13 @@ logger = logging.getLogger(__name__)
 
 def put(args, data):
     did = data['pkt'].get('id')
-    fname = data['pkt'].get('name')
-    fname = "%s-%s" % (did, fname)
-    logger.info("put did:%s \"%s\"", did, fname)
+    name = data['pkt'].get('name')
+    #fname = "%s-%s" % (did, fname)
+
+    rname = args['db'].get_file_rname(did, name)
+    if rname is None:
+        rname = ''.join(random.choice(string.ascii_lowercase + string.digits) for _ in range(32))
+    logger.info("put did:%s \"%s\" rname: %s", did, name, rname)
     
     args['svlock'].acquire()
     servers = args['sv']
@@ -24,22 +29,22 @@ def put(args, data):
     cli = args['svlink'](server, args['defaults']['domain'])
 
     sio = StringIO.StringIO(data['pkt'].get())
-    cli.put(fname, sio)
+    cli.put(rname, sio)
     cli.commit()
 
-    fid = args['db'].get_file_id(fname)
-    args['db'].add_file(did, fid)
+    fid = args['db'].get_file_id(rname)
+    args['db'].add_file(did, fid, name)
 
     pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())
 
 def get(args, data):
     fid = data['pkt'].get('id')
-    fname = args['db'].get_file_name(fid)
+    fname = args['db'].get_file_rname_by_id(fid)
 
     servers = args['db'].get_file_sv(fid)
     if servers == {}:
-        logger.error("get (%s)%s ERROR", fid, fname)
+        logger.error("get (%s)%s ERROR - No Server", fid, fname)
         args['db'].rm_file(fid)
         pkt = packet.Packet({'result': 'Error'})
         data['sock'].sendall(pkt.tostr())
@@ -54,7 +59,7 @@ def get(args, data):
         pkt = packet.Packet({'result': 'OK'}, output.read())
         data['sock'].sendall(pkt.tostr())
     else:
-        logger.error("get (%s)%s ERROR", fid, fname)
+        logger.error("get (%s)%s ERROR - koboldfs", fid, fname)
         pkt = packet.Packet({'result': 'Error'}, output.read())
         data['sock'].sendall(pkt.tostr())
 
@@ -67,17 +72,14 @@ def mvfile(args, data):
 
     if pdid is not None:
         args['db'].move_file(fid, pdid)
-    else:
-        pdid = args['db'].get_file_dir(fid)
     if name is not None:
-        name = "%s-%s" % (pdid, name)
         args['db'].rename_file(fid, name)
     pkt = packet.Packet({}, 'OK')
     data['sock'].sendall(pkt.tostr())
 
 def rm(args, data):
     fid = data['pkt'].get('id')
-    fname = args['db'].get_file_name(fid)
+    fname = args['db'].get_file_rname_by_id(fid)
 
     logger.info("rm (%s) %s", fid, fname)
     args['svlock'].acquire()

@@ -51,8 +51,7 @@ def handle(args, data):
     return True
 
 def newsock(args, sock, addr):
-    logger.debug("newsock enter")
-    logger.info("newsocket: %s", addr)
+    logger.debug("newsocket: %s", addr)
     i = args['conn']['count']
     args['conn']['count'] = i + 1
     args['conn']['total'][i] = sock
