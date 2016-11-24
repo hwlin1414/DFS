@@ -18,7 +18,7 @@ import server
 
 #c = koboldfs.client.Client('demo', servers = ['localhost:999'])
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('main')
 cfgfile = ('dfs.conf', )
 
 def get_backend(cfg):

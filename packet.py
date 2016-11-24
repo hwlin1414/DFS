@@ -40,11 +40,12 @@ class Packet:
     def check(self):
         l = self.get('content-length')
         if l == None:
-            print "packet unknown"
+            logger.debug("packet check error(no content-length)")
             return None
         if int(l) <= len(self.get()):
-            #print "check true"
+            logger.debug("packet check ok")
             return True
+        logger.debug("packet check false")
         #print "check false"
         return False
 

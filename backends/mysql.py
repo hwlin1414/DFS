@@ -65,7 +65,7 @@ class database(object):
         res = self.c.fetchall()
         
         for r in res:
-            print "found file: %d on %s" % (r['file_id'], server)
+            logger.info("Found file %s on %s", r['file_id'], server)
             self.c.execute("""
                 DELETE FROM replicas
                 WHERE id = %s
@@ -181,7 +181,7 @@ class database(object):
             FROM files
             INNER JOIN files_dirs ON files.id = files_dirs.file_id
             WHERE files_dirs.dir_id = %s
-            AND files.status == 'R'
+            AND files.status = 'R'
         """, (d, ))
         res = self.c.fetchall()
         for r in res:

@@ -23,9 +23,9 @@ def handle2(args, data):
             bef = None
         act = getattr(con, data['pkt'].get('action'))
     except (AttributeError, TypeError), e:
-        logger.debug("Unknown Packet Recieved:%s", data['pkt'].tostr())
+        #logger.debug("Unknown Packet Recieved:%s", data['pkt'].tostr())
         return True
-    logger.debug("packet: %s -> %s content:%s", data['pkt'].get('controller'), data['pkt'].get('action'), data['pkt'].tostr())
+    #logger.debug("packet: %s -> %s content-length:%s", data['pkt'].get('controller'), data['pkt'].get('action'), data['pkt'].get('content-length'))
 
     if bef is not None:
         ret = bef(args, data)
@@ -34,7 +34,7 @@ def handle2(args, data):
     return act(args, data)
 
 def handle(args, data):
-    logger.debug("handle enter(recieved packet)")
+    #logger.debug("handle enter(recieved packet)")
     buf = data['sock'].recv(4096)
     if len(buf) == 0:
         return False
@@ -53,8 +53,6 @@ def handle(args, data):
 def newsock(args, sock, addr):
     logger.debug("newsock enter")
     logger.info("newsocket: %s", addr)
-    #if args['defaults']['debug']:
-    #    print "newsocket:", addr
     i = args['conn']['count']
     args['conn']['count'] = i + 1
     args['conn']['total'][i] = sock
